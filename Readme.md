@@ -1,4 +1,4 @@
-# KRA ETIMS Tracker - Petrol Stations Kenya
+# ETIMS Tracker - Petrol Stations Kenya
 
 A mobile-responsive web application for tracking KRA ETIMS integration status across petrol stations in Kenya.
 
