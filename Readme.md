@@ -45,7 +45,7 @@ A mobile-responsive web application for tracking KRA ETIMS integration status ac
 **Issue**: Markers not showing
 - **Solution**: Check browser console for errors, ensure data.js is loaded
 
-## 📱 Browser Support
+## Browser Support
 
 - Chrome/Edge (latest)
 - Firefox (latest)
