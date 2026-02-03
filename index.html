@@ -1,260 +1,385 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>KRA ETIMS Tracker - Petrol Stations Kenya</title>
-    
+
     <!-- External Libraries -->
-   <link rel="icon" type="image/png" sizes="64x64" href="images/fuel2.png">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+    <link rel="icon" type="image/png" sizes="64x64" href="images/fuel2.png" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
 
-    
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="style.css" />
+
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "GA_TRACKING_ID");
+    </script>
+  </head>
+  <body>
     <div class="app-container">
-        <!-- Header -->
-        <header class="app-header">
-           <div class="header-top">
-    <div class="app-title">
-        <div class="logo">
-            <i class="fas fa-gas-pump"></i>
-        </div>
-        <h1>ETIMS Tracker</h1>
-    </div>
-
-    <div class="header-actions">
-        <button class="icon-btn" onclick="UI.toggleSidebar()" title="Filters & Stats">
-            <i class="fas fa-bars"></i>
-        </button>
-
-        <button class="icon-btn" onclick="DataManager.exportData()" title="Export Report">
-            <i class="fas fa-file-export"></i>
-        </button>
-
-        <button class="icon-btn" onclick="MapManager.getUserLocation()" title="My Location">
-            <i class="fas fa-map-marker-alt"></i>
-        </button>
-    </div>
-</div>
-
-  <!-- Search Bar -->
-            <div class="search-container" id="searchContainer">
-                <div class="search-input-wrapper">
-                    <span class="search-icon"><i class="fas fa-search"></i></span>
-
-                    <input 
-                        type="text" 
-                        class="search-input" 
-                        id="searchInput" 
-                        placeholder="Search stations by name, brand, or county..."
-                        autocomplete="off"
-                    >
-                    <button class="search-clear" id="searchClear" onclick="SearchManager.clearSearch()">×</button>
-                </div>
-                <div class="search-results" id="searchResults"></div>
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-top">
+          <div class="app-title">
+            <div class="logo">
+              <i class="fas fa-gas-pump"></i>
             </div>
+            <h1>ETIMS Tracker</h1>
+          </div>
 
-            <div class="stats-bar">
-                <div class="stat-item" style="border-color: var(--accent);">
-                    <div class="stat-value" id="liveCount" style="color: var(--accent);">0</div>
-                    <div class="stat-label">Live</div>
-                </div>
-                <div class="stat-item" style="border-color: var(--warning);">
-                    <div class="stat-value" id="pendingCount" style="color: var(--warning);">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-                <div class="stat-item" style="border-color: var(--neutral);">
-                    <div class="stat-value" id="notStartedCount" style="color: var(--neutral);">0</div>
-                    <div class="stat-label">Not Started</div>
-                </div>
-            </div>
-        </header>
+          <div class="header-actions">
+            <button
+              class="icon-btn"
+              onclick="UI.toggleSidebar()"
+              title="Filters & Stats"
+            >
+              <i class="fas fa-bars"></i>
+            </button>
 
-        <!-- Map -->
-        <div class="map-container">
-            <div id="map"></div>
+            <button
+              class="icon-btn"
+              onclick="DataManager.exportData()"
+              title="Export Report"
+            >
+              <i class="fas fa-file-export"></i>
+            </button>
+
+            <button
+              class="icon-btn"
+              onclick="MapManager.getUserLocation()"
+              title="My Location"
+            >
+              <i class="fas fa-map-marker-alt"></i>
+            </button>
+          </div>
         </div>
 
-        <!-- Floating Action Button -->
-        <button class="fab" id="fab" onclick="UI.toggleAddStation()">
-            <span>+</span>
-        </button>
+        <!-- Search Bar -->
+        <div class="search-container" id="searchContainer">
+          <div class="search-input-wrapper">
+            <span class="search-icon"><i class="fas fa-search"></i></span>
 
-        <!-- Overlay -->
-        <div class="overlay" id="overlay" onclick="UI.closeAll()"></div>
-
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2 class="sidebar-title">Filters & Analytics</h2>
-                <button class="close-btn" onclick="UI.toggleSidebar()">×</button>
-            </div>
-            <div class="sidebar-content">
-                <!-- Progress -->
-                <div class="progress-container">
-                    <div class="progress-label">
-                        <span>Integration Progress</span>
-                        <span id="progressPercent">0%</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <!-- Stats Grid -->
-                <div class="stats-grid">
-                    <div class="stats-card">
-                        <div class="stats-card-value" id="totalStations">0</div>
-                        <div class="stats-card-label">Total Stations</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value" id="customStations">0</div>
-                        <div class="stats-card-label">Custom Added</div>
-                    </div>
-                </div>
-
-                <!-- Filters -->
-                <div class="filter-group">
-                    <div class="filter-title">Filter by Status</div>
-                   <div class="checkbox-list">
-    <label class="checkbox-item">
-        <input type="checkbox" checked onchange="FilterManager.toggleFilter('live')" id="filterLive">
-        <span class="checkbox-label">
-            <span>Live</span>
-            <span class="checkbox-count" id="liveCountFilter">0</span>
-        </span>
-    </label>
-
-    <label class="checkbox-item">
-        <input type="checkbox" checked onchange="FilterManager.toggleFilter('pending')" id="filterPending">
-        <span class="checkbox-label">
-            <span>Pending</span>
-            <span class="checkbox-count" id="pendingCountFilter">0</span>
-        </span>
-    </label>
-
-    <label class="checkbox-item">
-        <input type="checkbox" checked onchange="FilterManager.toggleFilter('notStarted')" id="filterNotStarted">
-        <span class="checkbox-label">
-            <span>Not Started</span>
-            <span class="checkbox-count" id="notStartedCountFilter">0</span>
-        </span>
-    </label>
-</div>
-
-                </div>
-
-                <!-- Brand Filter -->
-                <div class="filter-group">
-                    <div class="filter-title">Filter by Brand</div>
-                    <div class="form-group">
-                        <select class="form-select" id="brandFilter" onchange="FilterManager.applyFilters()">
-                            <option value="">All Brands</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- County Filter -->
-                <div class="filter-group">
-                    <div class="filter-title">Filter by County</div>
-                    <div class="form-group">
-                        <select class="form-select" id="countyFilter" onchange="FilterManager.applyFilters()">
-                            <option value="">All Counties</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+            <input
+              type="text"
+              class="search-input"
+              id="searchInput"
+              placeholder="Search stations by name, brand, or county..."
+              autocomplete="off"
+            />
+            <button
+              class="search-clear"
+              id="searchClear"
+              onclick="SearchManager.clearSearch()"
+            >
+              ×
+            </button>
+          </div>
+          <div class="search-results" id="searchResults"></div>
         </div>
 
-        <!-- Bottom Sheet (Add/Edit Station) -->
-        <div class="bottom-sheet" id="bottomSheet">
-            <div class="sheet-handle"></div>
-            <div class="sheet-header">
-                <h2 class="sheet-title" id="sheetTitle">Add New Station</h2>
-                <p class="sheet-subtitle" id="sheetSubtitle">Click on map to select location</p>
+        <div class="stats-bar">
+          <div class="stat-item" style="border-color: var(--accent)">
+            <div class="stat-value" id="liveCount" style="color: var(--accent)">
+              0
             </div>
-            <div class="sheet-content">
-                <form id="stationForm">
-                    <div class="form-group">
-                        <label class="form-label">Station Name *</label>
-                        <input type="text" class="form-input" id="stationName" placeholder="e.g., Total Westlands" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Brand *</label>
-                        <select class="form-select" id="stationBrand" required>
-                            <option value="">Select Brand</option>
-                            <optgroup label="Major Brands">
-                                <option value="Total">Total</option>
-                                <option value="Shell">Shell</option>
-                                <option value="Rubis">Rubis</option>
-                                <option value="Kenol">Kenol</option>
-                                <option value="Kobil">Kobil</option>
-                                <option value="Ola">Ola</option>
-                                <option value="Galana">Galana</option>
-                            </optgroup>
-                            <optgroup label="Other Brands">
-                                <option value="Hass">Hass</option>
-                                <option value="Engen">Engen</option>
-                                <option value="Delta">Delta</option>
-                                <option value="National Oil">National Oil</option>
-                                <option value="Be Energy">Be Energy</option>
-                            </optgroup>
-                            <optgroup label="Other">
-                                <option value="Independent">Independent</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">County *</label>
-                        <input type="text" class="form-input" id="stationCounty" placeholder="e.g., Nairobi" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">KRA ETIMS Status *</label>
-                        <select class="form-select" id="etimsStatus" required>
-                            <option value="">Select Status</option>
-                            <option value="live">&#xf058; Live - Integrated & Operating</option>
-                            <option value="pending">&#xf252; Pending - Integration in Progress</option>
-                            <option value="not-started">&#xf111; Not Started - Needs Integration</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Notes (Optional)</label>
-                        <input type="text" class="form-input" id="etimsNotes" placeholder="e.g., Completed 15/01/2026">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Location Coordinates</label>
-                        <input type="text" class="form-input" id="stationLatLng" readonly style="background: var(--bg);">
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-secondary" style="flex: 0.4;" onclick="UI.closeBottomSheet()">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="flex: 0.6;">
-                            <span id="submitBtnText">Add Station</span>
-                        </button>
-                    </div>
-                </form>
+            <div class="stat-label">Live</div>
+          </div>
+          <div class="stat-item" style="border-color: var(--warning)">
+            <div
+              class="stat-value"
+              id="pendingCount"
+              style="color: var(--warning)"
+            >
+              0
             </div>
+            <div class="stat-label">Pending</div>
+          </div>
+          <div class="stat-item" style="border-color: var(--neutral)">
+            <div
+              class="stat-value"
+              id="notStartedCount"
+              style="color: var(--neutral)"
+            >
+              0
+            </div>
+            <div class="stat-label">Not Started</div>
+          </div>
         </div>
+      </header>
 
-        <!-- Toast Notification -->
-        <div class="toast" id="toast"></div>
+      <!-- Map -->
+      <div class="map-container">
+        <div id="map"></div>
+      </div>
+
+      <!-- Floating Action Button -->
+      <button class="fab" id="fab" onclick="UI.toggleAddStation()">
+        <span>+</span>
+      </button>
+
+      <!-- Overlay -->
+      <div class="overlay" id="overlay" onclick="UI.closeAll()"></div>
+
+      <!-- Sidebar -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h2 class="sidebar-title">Filters & Analytics</h2>
+          <button class="close-btn" onclick="UI.toggleSidebar()">×</button>
+        </div>
+        <div class="sidebar-content">
+          <!-- Progress -->
+          <div class="progress-container">
+            <div class="progress-label">
+              <span>Integration Progress</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div
+                class="progress-bar-fill"
+                id="progressBar"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stats-card">
+              <div class="stats-card-value" id="totalStations">0</div>
+              <div class="stats-card-label">Total Stations</div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-card-value" id="customStations">0</div>
+              <div class="stats-card-label">Custom Added</div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="filter-group">
+            <div class="filter-title">Filter by Status</div>
+            <div class="checkbox-list">
+              <label class="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked
+                  onchange="FilterManager.toggleFilter('live')"
+                  id="filterLive"
+                />
+                <span class="checkbox-label">
+                  <span>Live</span>
+                  <span class="checkbox-count" id="liveCountFilter">0</span>
+                </span>
+              </label>
+
+              <label class="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked
+                  onchange="FilterManager.toggleFilter('pending')"
+                  id="filterPending"
+                />
+                <span class="checkbox-label">
+                  <span>Pending</span>
+                  <span class="checkbox-count" id="pendingCountFilter">0</span>
+                </span>
+              </label>
+
+              <label class="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked
+                  onchange="FilterManager.toggleFilter('notStarted')"
+                  id="filterNotStarted"
+                />
+                <span class="checkbox-label">
+                  <span>Not Started</span>
+                  <span class="checkbox-count" id="notStartedCountFilter"
+                    >0</span
+                  >
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Brand Filter -->
+          <div class="filter-group">
+            <div class="filter-title">Filter by Brand</div>
+            <div class="form-group">
+              <select
+                class="form-select"
+                id="brandFilter"
+                onchange="FilterManager.applyFilters()"
+              >
+                <option value="">All Brands</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- County Filter -->
+          <div class="filter-group">
+            <div class="filter-title">Filter by County</div>
+            <div class="form-group">
+              <select
+                class="form-select"
+                id="countyFilter"
+                onchange="FilterManager.applyFilters()"
+              >
+                <option value="">All Counties</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Sheet (Add/Edit Station) -->
+      <div class="bottom-sheet" id="bottomSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h2 class="sheet-title" id="sheetTitle">Add New Station</h2>
+          <p class="sheet-subtitle" id="sheetSubtitle">
+            Click on map to select location
+          </p>
+        </div>
+        <div class="sheet-content">
+          <form id="stationForm">
+            <div class="form-group">
+              <label class="form-label">Station Name *</label>
+              <input
+                type="text"
+                class="form-input"
+                id="stationName"
+                placeholder="e.g., Total Westlands"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Brand *</label>
+              <select class="form-select" id="stationBrand" required>
+                <option value="">Select Brand</option>
+                <optgroup label="Major Brands">
+                  <option value="Total">Total</option>
+                  <option value="Shell">Shell</option>
+                  <option value="Rubis">Rubis</option>
+                  <option value="Kenol">Kenol</option>
+                  <option value="Kobil">Kobil</option>
+                  <option value="Ola">Ola</option>
+                  <option value="Galana">Galana</option>
+                </optgroup>
+                <optgroup label="Other Brands">
+                  <option value="Hass">Hass</option>
+                  <option value="Engen">Engen</option>
+                  <option value="Delta">Delta</option>
+                  <option value="National Oil">National Oil</option>
+                  <option value="Be Energy">Be Energy</option>
+                </optgroup>
+                <optgroup label="Other">
+                  <option value="Independent">Independent</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">County *</label>
+              <input
+                type="text"
+                class="form-input"
+                id="stationCounty"
+                placeholder="e.g., Nairobi"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">KRA ETIMS Status *</label>
+              <select class="form-select" id="etimsStatus" required>
+                <option value="">Select Status</option>
+                <option value="live">
+                  &#xf058; Live - Integrated & Operating
+                </option>
+                <option value="pending">
+                  &#xf252; Pending - Integration in Progress
+                </option>
+                <option value="not-started">
+                  &#xf111; Not Started - Needs Integration
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Notes (Optional)</label>
+              <input
+                type="text"
+                class="form-input"
+                id="etimsNotes"
+                placeholder="e.g., Completed 15/01/2026"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Location Coordinates</label>
+              <input
+                type="text"
+                class="form-input"
+                id="stationLatLng"
+                readonly
+                style="background: var(--bg)"
+              />
+            </div>
+
+            <div class="btn-group">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                style="flex: 0.4"
+                onclick="UI.closeBottomSheet()"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary" style="flex: 0.6">
+                <span id="submitBtnText">Add Station</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Toast Notification -->
+      <div class="toast" id="toast"></div>
     </div>
 
     <!-- External Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    
+
     <!-- Application Scripts -->
     <script src="Scripts/config.js"></script>
     <script src="Scripts/data.js"></script>
@@ -263,5 +388,5 @@
     <script src="Scripts/FilterManager.js"></script>
     <script src="Scripts/UI.js"></script>
     <script src="Scripts/App.js"></script>
-</body>
+  </body>
 </html>
