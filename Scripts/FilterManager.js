@@ -43,7 +43,19 @@ const FilterManager = {
 
     // Toggle status filter
     toggleFilter(status) {
-        this.state[status] = !this.state[status];
+        // Read actual checkbox state to ensure sync with UI
+        let checkboxId = '';
+        if (status === 'live') checkboxId = 'filterLive';
+        else if (status === 'pending') checkboxId = 'filterPending';
+        else if (status === 'notStarted') checkboxId = 'filterNotStarted';
+        
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            this.state[status] = checkbox.checked;
+        } else {
+            this.state[status] = !this.state[status];
+        }
+        
         this.applyFilters();
     },
 

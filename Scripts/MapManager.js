@@ -179,13 +179,36 @@ const MapManager = {
         const deleteBtn = isCustom ? 
             `<button class="popup-btn popup-btn-secondary" onclick="MapManager.deleteStation(${station.lat}, ${station.lng})"><i class="fas fa-trash"></i> Delete</button>` : '';
 
+        // Generate a logo initial
+        const logoInitial = station.brand.charAt(0);
+
         return `
             <div class="popup-content">
                 <div class="popup-header">
-                    <div class="status-badge ${statusBadgeClass}">${statusBadgeText}</div>
-                    <div class="popup-brand" style="color: ${color};">${station.brand}</div>
-                    <div class="popup-name">${station.name}</div>
-                    <div class="popup-location"><i class="fas fa-map-marker-alt"></i> ${station.county} County</div>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <div style="
+                            width: 40px; 
+                            height: 40px; 
+                            background: ${color}; 
+                            color: #fff; 
+                            border-radius: 50%; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            font-weight: 800; 
+                            font-size: 18px;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                        ">
+                            ${logoInitial}
+                        </div>
+                        <div>
+                            <div class="status-badge ${statusBadgeClass}" style="display: inline-block; margin-bottom: 2px;">${statusBadgeText}</div>
+                            <div class="popup-brand" style="color: ${color}; font-weight: 600; font-size: 0.9em;">${station.brand}</div>
+                        </div>
+                    </div>
+                    <div class="popup-name" style="font-weight: 700; font-size: 1.1em; margin-bottom: 4px; line-height: 1.3;">${station.name}</div>
+                    <div class="popup-location" style="color: #64748B; font-size: 0.9em;"><i class="fas fa-map-marker-alt"></i> ${station.county} County</div>
                 </div>
                 ${notesHtml}
                 ${deviceHtml}
