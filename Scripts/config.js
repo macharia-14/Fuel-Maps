@@ -16,7 +16,7 @@ const CONFIG = {
     // Brand Colors - All major brands in Kenya
     brandColors: {
         // From user list
-        'Astrol': '#FFD700',
+        'Astrol': '#eccb0fed',
         'Be Energy': '#00A651',
         'Dalbit': '#FFC20E',
         'Engen': '#FF0000',
@@ -25,13 +25,13 @@ const CONFIG = {
         'Green Wells': '#228B22',
         'Gulf Energy': '#06A4DE',
         'Hass': '#CA8A10',
-        'Lake Oil': '#003399',
+        'Lake Oil': '#0029996f',
         'Lexo': '#084298',
         'Ola': '#FF5500', // OLA Energy
         'Oryx': '#E31837',
-        'Petro': '#F7CC3A',
+        'Petro': '#dda2c0',
         'Rubis': '#C5212A', // Rubis Energy (KenolKobil)
-        'Sahara': '#FFB00D',
+        'Sahara': '#d7b776',
         'Shell': '#FBCE07',
         'Stabex': '#008000',
         'Total': '#FF0000', // TotalEnergies
@@ -39,14 +39,14 @@ const CONFIG = {
 
         // Existing from old config not in new list
         'Kenol': '#7209B7',
-        'Kobil': '#560BAD',
+        'Kobil': 'rgb(124, 145, 167)',
         'Delta': '#118AB2',
         'National Oil': '#073B4C',
-        'Petroleum Outlets': '#8338EC',
+        'Petroleum Outlets': '#383838',
         'Oilibya': '#3A86FF',
         'Tosha Petroleum': '#10B981',
         'Mega Oil': '#F59E0B',
-        'Movida Energy': '#8B5CF6',
+        'Movida Energy': '#626165',
         'Mogas': '#EC4899',
         
         // Independent & Others
