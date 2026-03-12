@@ -1,4 +1,8 @@
-
+/**
+ * UI Manager
+ * Handles all UI interactions and updates
+ * Mobile-optimized
+ */
 
 const UI = {
     editingStation: null,
