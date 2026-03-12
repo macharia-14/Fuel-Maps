@@ -49,30 +49,65 @@ const SearchManager = {
         }, 300);
     },
 
+    // Perform an external search using Nominatim API
+    async performExternalSearch(query) {
+        // Bias search to Kenya for relevant results
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ke&limit=5`;
+
+        try {
+            const response = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+            if (!response.ok) return [];
+
+            const data = await response.json();
+            return data.map(item => ({
+                name: item.display_name,
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon),
+                isExternal: true
+            }));
+        } catch (error) {
+            console.error('External search failed:', error);
+            return [];
+        }
+    },
+
     // Perform the actual search
-    performSearch(query) {
+    async performSearch(query) {
         if (!query || query.trim().length < 2) {
             this.hideResults();
             return;
         }
 
         const searchTerm = query.toLowerCase().trim();
-        const allStations = DataManager.getAllStations();
         
-        // Search through stations
-        this.currentResults = allStations.filter(station => {
+        // 1. Perform local search
+        const allStations = DataManager.getAllStations();
+        const localResults = allStations.filter(station => {
             const matchName = station.name.toLowerCase().includes(searchTerm);
             const matchBrand = station.brand.toLowerCase().includes(searchTerm);
             const matchCounty = station.county.toLowerCase().includes(searchTerm);
-            
             return matchName || matchBrand || matchCounty;
         });
 
-        // Sort results by relevance (exact matches first)
+        // 2. Perform external search
+        const externalResults = await this.performExternalSearch(query);
+
+        // 3. Filter out external results that are too close to local results
+        const uniqueExternalResults = externalResults.filter(extResult => {
+            return !localResults.some(localResult => {
+                const distance = this.calculateDistance(extResult.lat, extResult.lng, localResult.lat, localResult.lng);
+                return distance < 100; // within 100m, consider it a duplicate
+            });
+        });
+
+        // 4. Combine and sort results (local results first)
+        this.currentResults = [...localResults, ...uniqueExternalResults];
         this.currentResults.sort((a, b) => {
+            if (a.isExternal && !b.isExternal) return 1;
+            if (!a.isExternal && b.isExternal) return -1;
+
             const aNameMatch = a.name.toLowerCase().startsWith(searchTerm);
             const bNameMatch = b.name.toLowerCase().startsWith(searchTerm);
-            
             if (aNameMatch && !bNameMatch) return -1;
             if (!aNameMatch && bNameMatch) return 1;
             
@@ -104,6 +139,22 @@ const SearchManager = {
         const displayResults = results.slice(0, 10);
         
         resultsContainer.innerHTML = displayResults.map((station, index) => {
+            // Handle external results
+            if (station.isExternal) {
+                return `
+                    <div class="search-result-item" onclick="SearchManager.selectExternalResult(${index})" data-index="${index}">
+                        <div class="search-result-icon" style="background: #6c757d20; color: #6c757d;">
+                            <i class="fas fa-globe-africa"></i>
+                        </div>
+                        <div class="search-result-content">
+                            <div class="search-result-name">${this.highlightMatch(station.name, searchTerm)}</div>
+                            <div class="search-result-details"><span>External Result</span></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Existing code for local results
             const etimsStatus = DataManager.getEtimsStatus(station.lat, station.lng);
             const color = CONFIG.brandColors[station.brand] || CONFIG.brandColors['Independent'];
             
@@ -174,6 +225,9 @@ const SearchManager = {
         // Clear search input and results
         this.clearSearch();
         
+        // Reset filters to ensure the station is visible on the map
+        FilterManager.resetFilters();
+        
         // Zoom to station with animation
         MapManager.map.flyTo([station.lat, station.lng], 16, {
             duration: 1.5
@@ -189,6 +243,29 @@ const SearchManager = {
         }, 1600);
         
         UI.showToast(`📍 ${station.name}`);
+    },
+
+    // Select an external search result
+    selectExternalResult(index) {
+        if (index < 0 || index >= this.currentResults.length) return;
+
+        const result = this.currentResults[index];
+
+        // Clear search
+        this.clearSearch();
+
+        // Fly to location
+        MapManager.map.flyTo([result.lat, result.lng], 16, {
+            duration: 1.5
+        });
+
+        // After flying, prompt to add a new station
+        const suggestedName = result.name.split(',')[0];
+        setTimeout(() => {
+            MapManager.promptToAddStationAt({ lat: result.lat, lng: result.lng }, suggestedName);
+        }, 1600); // Wait for flyTo animation
+
+        UI.showToast(`Selected: ${suggestedName}`);
     },
 
     // Handle keyboard navigation
@@ -216,9 +293,14 @@ const SearchManager = {
             case 'Enter':
                 e.preventDefault();
                 if (currentIndex >= 0) {
-                    this.selectResult(currentIndex);
+                    const selectedItem = this.currentResults[currentIndex];
+                    if (selectedItem.isExternal) {
+                        this.selectExternalResult(currentIndex);
+                    } else {
+                        this.selectResult(currentIndex);
+                    }
                 } else if (results.length > 0) {
-                    this.selectResult(0);
+                    this.currentResults[0].isExternal ? this.selectExternalResult(0) : this.selectResult(0);
                 }
                 break;
             case 'Escape':

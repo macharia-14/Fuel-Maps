@@ -382,6 +382,55 @@ const MapManager = {
         document.getElementById('userLocationInfo').style.display = 'none';
     },
 
+    // Prompt to add a station at a specific lat/lng, often from an external search
+    promptToAddStationAt(latlng, name = '') {
+        this.newStationLatLng = latlng;
+        
+        // Remove previous temp marker
+        if (this.tempMarker) {
+            this.map.removeLayer(this.tempMarker);
+        }
+        
+        // Add temp marker at the location
+        this.tempMarker = L.marker(latlng, {
+            icon: L.divIcon({
+                className: 'temp-marker',
+                html: `
+                    <div style="position: relative; width: 28px; height: 28px;">
+                        <div class="pulse-ring"></div>
+                        <div style="
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            width: 20px;
+                            height: 20px;
+                            background: #10B981;
+                            border: 3px solid white;
+                            border-radius: 50%;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        "></div>
+                    </div>
+                `,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            })
+        }).addTo(this.map);
+        
+        // Update form
+        document.getElementById('stationLatLng').value = 
+            `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
+        
+        // Pre-fill name if provided
+        if (name) {
+            document.getElementById('stationName').value = name;
+        }
+        
+        // Update sheet subtitle and show bottom sheet
+        document.getElementById('sheetSubtitle').textContent = 'Adding station from search';
+        UI.showBottomSheet();
+    },
+
     // Get directions to a station
     getDirections(lat, lng) {
         if (!this.userLocation) {
