@@ -15,33 +15,42 @@ const CONFIG = {
 
     // Brand Colors - All major brands in Kenya
     brandColors: {
-        // Major Oil Companies
-        'Total': '#E63946',
-        'Shell': '#FFD60A',
-        'Rubis': '#9D4EDD',
+        // From user list
+        'Astrol': '#FFD700',
+        'Be Energy': '#00A651',
+        'Dalbit': '#FFC20E',
+        'Engen': '#FF0000',
+        'Galana': '#084298',
+        'Gapco': '#008000',
+        'Green Wells': '#228B22',
+        'Gulf Energy': '#06A4DE',
+        'Hass': '#CA8A10',
+        'Lake Oil': '#003399',
+        'Lexo': '#85217A',
+        'Ola': '#FF5500', // OLA Energy
+        'Oryx': '#E31837',
+        'Petro': '#F7CC3A',
+        'Rubis': '#C5212A', // Rubis Energy (KenolKobil)
+        'Sahara': '#FFB00D',
+        'Shell': '#FBCE07',
+        'Stabex': '#008000',
+        'Total': '#FF0000', // TotalEnergies
+        'Towba': '#000000',
+
+        // Existing from old config not in new list
         'Kenol': '#7209B7',
         'Kobil': '#560BAD',
-        'Ola': '#FF6B35',
-        'Galana': '#4ECDC4',
-        'Hass': '#F72585',
-        'Engen': '#06D6A0',
         'Delta': '#118AB2',
         'National Oil': '#073B4C',
-        'Be Energy': '#FB5607',
-        
-        // Additional Kenyan Brands
-        'Stabex': '#FF006E',
         'Petroleum Outlets': '#8338EC',
         'Oilibya': '#3A86FF',
-        'Gulf Energy': '#FF7B00',
-        'Lake Oil': '#06BCC1',
         'Tosha Petroleum': '#10B981',
         'Mega Oil': '#F59E0B',
         'Movida Energy': '#8B5CF6',
         'Mogas': '#EC4899',
         
         // Independent & Others
-        'Independent': '#6C757D',
+        'Independent': '#808080',
         'Other': '#94A3B8'
     },
 

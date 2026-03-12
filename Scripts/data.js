@@ -21,6 +21,7 @@ const petrolStations = [
     { name: 'Engen Riverside', brand: 'Engen', lat: -1.2678, lng: 36.8235, county: 'Nairobi' },
     { name: 'Total Waiyaki Way', brand: 'Total', lat: -1.2592, lng: 36.7812, county: 'Nairobi' },
     { name: 'Shell Kileleshwa', brand: 'Shell', lat: -1.2831, lng: 36.7832, county: 'Nairobi' },
+    { name: 'Towba Petroleum Embakasi', brand: 'Towba', lat: -1.3335, lng: 36.9234, county: 'Nairobi' },
     
     // MOMBASA COUNTY
     { name: 'Total Nyali', brand: 'Total', lat: -4.0435, lng: 39.7159, county: 'Mombasa' },
