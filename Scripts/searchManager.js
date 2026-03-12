@@ -1,7 +1,6 @@
 /* Search Manager- Handles search functionality for petrol stations */
 
 const SearchManager = {
-    isSearchActive: false,
     searchTimeout: null,
     currentResults: [],
 
@@ -21,30 +20,10 @@ const SearchManager = {
 
         // Close search results when clicking outside
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-container') && 
-                !e.target.closest('#searchToggleBtn')) {
+            if (!e.target.closest('.search-bar-container')) {
                 this.hideResults();
             }
         });
-    },
-
-    // Toggle search visibility
-    toggleSearch() {
-        this.isSearchActive = !this.isSearchActive;
-        const searchContainer = document.getElementById('searchContainer');
-        const searchInput = document.getElementById('searchInput');
-        const searchToggleBtn = document.getElementById('searchToggleBtn');
-        
-        if (this.isSearchActive) {
-            searchContainer.classList.add('active');
-            searchToggleBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-            // Focus input after animation
-            setTimeout(() => searchInput.focus(), 300);
-        } else {
-            searchContainer.classList.remove('active');
-            searchToggleBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-            this.clearSearch();
-        }
     },
 
     // Handle search input with debouncing
@@ -244,9 +223,7 @@ const SearchManager = {
                 break;
             case 'Escape':
                 this.clearSearch();
-                if (this.isSearchActive) {
-                    this.toggleSearch();
-                }
+                document.getElementById('searchInput').blur();
                 break;
         }
     },

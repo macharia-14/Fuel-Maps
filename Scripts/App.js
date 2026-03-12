@@ -12,6 +12,7 @@ if (window.etimsTrackerInitialized) {
         // Initialize all managers
         MapManager.init();
         FilterManager.init();
+        SearchManager.init();
         UI.updateStats();
         
         // Set up form submission
