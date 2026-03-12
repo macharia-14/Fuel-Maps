@@ -1,8 +1,3 @@
-/**
- * Map Manager
- * Handles all map operations including markers, routing, and interactions
- * Mobile-optimized with add-at-user-location feature
- */
 
 const MapManager = {
     map: null,

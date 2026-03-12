@@ -192,6 +192,7 @@ const SearchManager = {
         
         const station = this.currentResults[index];
         
+
         // Clear search input and results
         this.clearSearch();
         
@@ -210,6 +211,25 @@ const SearchManager = {
         }, 1600);
         
         UI.showToast(`📍 ${station.name}`);
+
+        // Close search
+        this.clearSearch();
+        this.toggleSearch();
+        
+        // Zoom to station
+        MapManager.map.setView([station.lat, station.lng], 16);
+        
+        // Find and open popup for this station
+        MapManager.markers.forEach(m => {
+            if (m.station.lat === station.lat && m.station.lng === station.lng) {
+                setTimeout(() => {
+                    m.marker.openPopup();
+                }, 300);
+            }
+        });
+        
+        UI.showToast(`Showing ${station.name}`);
+
     },
 
     // Handle keyboard navigation
