@@ -60,13 +60,16 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 10px;
+    flex-wrap: wrap; /* Allow items to wrap on mobile */
+    gap: 1rem;
 }
 
 .app-title {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    order: 1;
 }
 
 .app-title h1 {
@@ -87,8 +90,13 @@ body {
 }
 
 .header-actions {
+    display: contents; /* Make children direct flex items of header-top */
+}
+
+.header-actions-buttons {
     display: flex;
     gap: 0.5rem;
+    order: 2; /* Buttons after title on mobile */
 }
 
 .icon-btn {
@@ -114,8 +122,10 @@ body {
 
 /* Search Bar */
 .search-bar-container {
-    margin-top: 0.75rem;
-    margin-bottom: 0.5rem;
+    width: 100%;
+    order: 3; /* Search bar last on mobile */
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .search-input-wrapper {
@@ -671,6 +681,14 @@ textarea.form-input:focus {
     -webkit-overflow-scrolling: touch;
 }
 
+.sidebar-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: var(--card-bg);
+    flex-shrink: 0;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom)); /* Safe area for iPhone X+ */
+}
+
 /* Filter Elements */
 .filter-group {
     margin-bottom: 1.5rem;
@@ -1055,6 +1073,21 @@ textarea.form-input:focus {
 }
 
 @media (min-width: 768px) {
+    .header-top {
+        flex-wrap: nowrap; /* Prevent wrapping on desktop */
+    }
+
+    .search-bar-container {
+        order: 2; /* Search bar in the middle */
+        width: 100%;
+        max-width: 500px;
+        flex-grow: 1; /* Allow it to grow and fill space */
+    }
+
+    .header-actions-buttons {
+        order: 3; /* Buttons last */
+    }
+
     .bottom-sheet {
         left: auto;
         right: 24px;
