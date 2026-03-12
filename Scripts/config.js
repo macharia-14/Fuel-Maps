@@ -13,6 +13,13 @@ const CONFIG = {
         attribution: '© OpenStreetMap contributors'
     },
 
+    // Real Brand Logos (optional, will override generated initial)
+    brandLogos: {
+        'Shell': 'https://upload.wikimedia.org/wikipedia/en/e/e8/Shell_logo.svg',
+        'Total': 'https://upload.wikimedia.org/wikipedia/en/9/9b/TotalEnergies_logo.svg',
+        'Rubis': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Rubis_logo.svg'
+    },
+
     // Brand Colors - All major brands in Kenya
     brandColors: {
         // From user list

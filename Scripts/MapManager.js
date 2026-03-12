@@ -55,9 +55,10 @@ const MapManager = {
     // Add a station marker to the map
     addStationMarker(station, isCustom = false) {
         const etimsStatus = DataManager.getEtimsStatus(station.lat, station.lng);
+        const deviceInfo = DeviceManager.getDeviceInfo(station.lat, station.lng);
         
         // Apply filters
-        if (!FilterManager.shouldShowStation(station, etimsStatus.status)) {
+        if (!FilterManager.shouldShowStation(station, etimsStatus.status, deviceInfo)) {
             return;
         }
         
@@ -94,7 +95,7 @@ const MapManager = {
         });
 
         // Create popup content
-        const popupContent = this.createPopupContent(station, etimsStatus, color, isCustom);
+        const popupContent = this.createPopupContent(station, etimsStatus, color, isCustom, deviceInfo);
         
         marker.bindPopup(popupContent, {
             maxWidth: 300,
@@ -105,7 +106,7 @@ const MapManager = {
     },
 
     // Create popup content HTML
-    createPopupContent(station, etimsStatus, color, isCustom) {
+    createPopupContent(station, etimsStatus, color, isCustom, deviceInfo) {
         const statusBadgeClass = {
             'live': 'status-live',
             'pending': 'status-pending',
@@ -117,8 +118,6 @@ const MapManager = {
         const notesHtml = etimsStatus.notes ? 
             `<div class="popup-notes">📝 ${etimsStatus.notes}</div>` : '';
 
-        // Get device info
-        const deviceInfo = DeviceManager.getDeviceInfo(station.lat, station.lng);
         let deviceHtml = '';
         
         if (deviceInfo && deviceInfo.pumpType) {
@@ -179,29 +178,47 @@ const MapManager = {
         const deleteBtn = isCustom ? 
             `<button class="popup-btn popup-btn-secondary" onclick="MapManager.deleteStation(${station.lat}, ${station.lng})"><i class="fas fa-trash"></i> Delete</button>` : '';
 
-        // Generate a logo initial
-        const logoInitial = station.brand.charAt(0);
+        // Generate logo: either a real image or a colored initial
+        const logoUrl = CONFIG.brandLogos[station.brand];
+        let logoHtml;
+
+        if (logoUrl) {
+            logoHtml = `
+                <div style="
+                    width: 40px; 
+                    height: 40px; 
+                    background: #fff; 
+                    border-radius: 50%; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    overflow: hidden;
+                    border: 1px solid #eee;
+                ">
+                    <img src="${logoUrl}" alt="${station.brand} Logo" style="width: 90%; height: 90%; object-fit: contain;">
+                </div>
+            `;
+        } else {
+            const logoInitial = station.brand.charAt(0);
+            logoHtml = `
+                <div style="
+                    width: 40px; height: 40px; background: ${color}; color: #fff; border-radius: 50%; 
+                    display: flex; align-items: center; justify-content: center; 
+                    font-weight: 800; font-size: 18px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                ">
+                    ${logoInitial}
+                </div>
+            `;
+        }
 
         return `
             <div class="popup-content">
                 <div class="popup-header">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                        <div style="
-                            width: 40px; 
-                            height: 40px; 
-                            background: ${color}; 
-                            color: #fff; 
-                            border-radius: 50%; 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center; 
-                            font-weight: 800; 
-                            font-size: 18px;
-                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-                        ">
-                            ${logoInitial}
-                        </div>
+                        ${logoHtml}
                         <div>
                             <div class="status-badge ${statusBadgeClass}" style="display: inline-block; margin-bottom: 2px;">${statusBadgeText}</div>
                             <div class="popup-brand" style="color: ${color}; font-weight: 600; font-size: 0.9em;">${station.brand}</div>

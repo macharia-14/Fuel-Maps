@@ -6,7 +6,8 @@ const FilterManager = {
         pending: true,
         notStarted: true,
         brand: '',
-        county: ''
+        county: '',
+        pumpType: ''
     },
 
     // Initialize filters
@@ -39,6 +40,18 @@ const FilterManager = {
             option.textContent = county;
             countyFilter.appendChild(option);
         });
+
+        // Populate pump types
+        const pumpTypeFilter = document.getElementById('pumpTypeFilter');
+        const pumpTypes = CONFIG.pumpTypes;
+        
+        pumpTypeFilter.innerHTML = '<option value="">All Pump Types</option>';
+        for (const key in pumpTypes) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = pumpTypes[key].label;
+            pumpTypeFilter.appendChild(option);
+        }
     },
 
     // Toggle status filter
@@ -63,13 +76,14 @@ const FilterManager = {
     applyFilters() {
         this.state.brand = document.getElementById('brandFilter').value;
         this.state.county = document.getElementById('countyFilter').value;
+        this.state.pumpType = document.getElementById('pumpTypeFilter').value;
         
         MapManager.refreshMarkers();
         UI.updateStats();
     },
 
     // Check if a station should be shown based on filters
-    shouldShowStation(station, status) {
+    shouldShowStation(station, status, deviceInfo) {
         // Status filter
         if (status === 'live' && !this.state.live) return false;
         if (status === 'pending' && !this.state.pending) return false;
@@ -81,6 +95,10 @@ const FilterManager = {
         // County filter
         if (this.state.county && station.county !== this.state.county) return false;
         
+        // Pump Type filter
+        const stationPumpType = deviceInfo ? deviceInfo.pumpType : '';
+        if (this.state.pumpType && stationPumpType !== this.state.pumpType) return false;
+        
         return true;
     },
 
@@ -91,7 +109,8 @@ const FilterManager = {
             pending: true,
             notStarted: true,
             brand: '',
-            county: ''
+            county: '',
+            pumpType: ''
         };
         
         document.getElementById('filterLive').checked = true;
@@ -99,6 +118,7 @@ const FilterManager = {
         document.getElementById('filterNotStarted').checked = true;
         document.getElementById('brandFilter').value = '';
         document.getElementById('countyFilter').value = '';
+        document.getElementById('pumpTypeFilter').value = '';
         
         this.applyFilters();
     }

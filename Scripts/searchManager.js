@@ -79,8 +79,21 @@ const SearchManager = {
         }
 
         const searchTerm = query.toLowerCase().trim();
+        const isNumericSearch = /^\d{3,}/.test(searchTerm.replace(/[\s-]/g, ''));
         
-        // 1. Perform local search
+        // 1. Perform IMEI search if applicable
+        let imeiResults = [];
+        if (isNumericSearch) {
+            const imeiMatches = DeviceManager.searchByIMEI(searchTerm);
+            imeiResults = imeiMatches.map(match => ({
+                ...match.station,
+                isImeiResult: true,
+                imeiMatchType: match.matchType,
+                matchedImei: match.matchType === 'master' ? match.deviceInfo.masterIMEI : match.deviceInfo.slaveIMEI
+            }));
+        }
+
+        // 2. Perform local name/brand/county search
         const allStations = DataManager.getAllStations();
         const localResults = allStations.filter(station => {
             const matchName = station.name.toLowerCase().includes(searchTerm);
@@ -89,31 +102,44 @@ const SearchManager = {
             return matchName || matchBrand || matchCounty;
         });
 
-        // 2. Perform external search
-        const externalResults = await this.performExternalSearch(query);
+        // 3. Perform external search (only if not a pure numeric search)
+        let externalResults = [];
+        if (!/^\d+$/.test(searchTerm.replace(/[\s-]/g, ''))) {
+             externalResults = await this.performExternalSearch(query);
+        }
 
-        // 3. Filter out external results that are too close to local results
+        // 4. Combine results, ensuring no duplicates, prioritizing IMEI matches
+        const combined = [];
+        const seenKeys = new Set();
+
+        const addResult = (station) => {
+            const key = `${station.lat}_${station.lng}`;
+            if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                combined.push(station);
+            }
+        };
+
+        imeiResults.forEach(addResult);
+        localResults.forEach(addResult);
+
+        // Filter out external results that are duplicates of local ones
         const uniqueExternalResults = externalResults.filter(extResult => {
-            return !localResults.some(localResult => {
+            return !combined.some(localResult => {
                 const distance = this.calculateDistance(extResult.lat, extResult.lng, localResult.lat, localResult.lng);
-                return distance < 100; // within 100m, consider it a duplicate
+                return distance < 100;
             });
         });
 
-        // 4. Combine and sort results (local results first)
-        this.currentResults = [...localResults, ...uniqueExternalResults];
-        this.currentResults.sort((a, b) => {
-            if (a.isExternal && !b.isExternal) return 1;
-            if (!a.isExternal && b.isExternal) return -1;
-
+        combined.sort((a, b) => {
             const aNameMatch = a.name.toLowerCase().startsWith(searchTerm);
             const bNameMatch = b.name.toLowerCase().startsWith(searchTerm);
             if (aNameMatch && !bNameMatch) return -1;
             if (!aNameMatch && bNameMatch) return 1;
-            
             return a.name.localeCompare(b.name);
         });
 
+        this.currentResults = [...combined, ...uniqueExternalResults];
         this.displayResults(this.currentResults, searchTerm);
     },
 
@@ -139,6 +165,26 @@ const SearchManager = {
         const displayResults = results.slice(0, 10);
         
         resultsContainer.innerHTML = displayResults.map((station, index) => {
+            // Handle IMEI results
+            if (station.isImeiResult) {
+                const color = CONFIG.brandColors[station.brand] || CONFIG.brandColors['Independent'];
+                return `
+                    <div class="search-result-item" onclick="SearchManager.selectResult(${index})" data-index="${index}">
+                        <div class="search-result-icon" style="background: ${color}20; color: ${color};">
+                            <i class="fas fa-barcode"></i>
+                        </div>
+                        <div class="search-result-content">
+                            <div class="search-result-name">${this.highlightMatch(station.name, searchTerm)}</div>
+                            <div class="search-result-details">
+                                <span>IMEI Match on ${station.imeiMatchType}</span>
+                                <span>•</span>
+                                <span>${this.highlightMatch(DeviceManager.formatIMEI(station.matchedImei), searchTerm)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             // Handle external results
             if (station.isExternal) {
                 return `

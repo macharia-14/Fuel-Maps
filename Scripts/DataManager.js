@@ -141,40 +141,59 @@ const DataManager = {
     exportData() {
         const allStations = this.getAllStations();
         const etimsData = this.getEtimsData();
-        
+        const deviceData = DeviceManager.getDeviceData();
+
         // Create CSV header
-        const headers = ['Station Name', 'Brand', 'County', 'ETIMS Status', 'Notes', 'Last Updated', 'Latitude', 'Longitude'];
-        
+        const headers = [
+            'Station Name', 'Brand', 'County', 'ETIMS Status', 'Notes', 'Last Updated',
+            'Pump Type', 'Master IMEI', 'Slave IMEI', 'Pump Count', 'Fuel Types',
+            'Total Nozzles', 'Nozzles per Pump', 'Installation Date',
+            'Latitude', 'Longitude'
+        ];
+
         // Create CSV rows
         const rows = allStations.map(station => {
             const stationKey = `${station.lat}_${station.lng}`;
             const etims = etimsData[stationKey] || { status: 'not-started', notes: '', updatedAt: '' };
-            
+            const deviceInfo = deviceData[stationKey] || {};
+
+            const fuelTypes = deviceInfo.fuelTypes && Array.isArray(deviceInfo.fuelTypes)
+                ? deviceInfo.fuelTypes.join('; ')
+                : '';
+
             return [
                 `"${station.name}"`,
                 `"${station.brand}"`,
                 `"${station.county}"`,
                 `"${etims.status}"`,
                 `"${etims.notes || ''}"`,
-                `"${etims.updatedAt ? new Date(etims.updatedAt).toLocaleString() : 'N/A'}"`,
+                `"${etims.updatedAt ? new Date(etims.updatedAt).toLocaleString() : ''}"`,
+                `"${deviceInfo.pumpType || ''}"`,
+                `"${deviceInfo.masterIMEI || ''}"`,
+                `"${deviceInfo.slaveIMEI || ''}"`,
+                deviceInfo.pumpCount || '',
+                `"${fuelTypes}"`,
+                deviceInfo.nozzleCount || '',
+                `"${deviceInfo.nozzlesPerPump || ''}"`,
+                `"${deviceInfo.installationDate || ''}"`,
                 station.lat,
                 station.lng
             ].join(',');
         });
-        
+
         // Combine headers and rows
         const csv = [headers.join(','), ...rows].join('\n');
-        
+
         // Create and download file
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `etims_report_${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `etims_full_report_${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         URL.revokeObjectURL(url);
-        
-        UI.showToast('Report exported successfully!');
+
+        UI.showToast('Full report exported successfully!');
     },
 
     // Get unique brands
