@@ -54,6 +54,11 @@ const MapManager = {
 
     // Add a station marker to the map
     addStationMarker(station, isCustom = false) {
+        // Safety check: Don't attempt to render markers with invalid coordinates
+        if (!station || isNaN(station.lat) || isNaN(station.lng) || station.lat === null || station.lng === null) {
+            return;
+        }
+
         const etimsStatus = DataManager.getEtimsStatus(station.lat, station.lng);
         const deviceInfo = DeviceManager.getDeviceInfo(station.lat, station.lng);
         
@@ -64,33 +69,55 @@ const MapManager = {
         
         const color = CONFIG.brandColors[station.brand] || CONFIG.brandColors['Independent'];
         const isLive = etimsStatus.status === 'live';
-        
-        // Create marker icon HTML
+        const isPending = etimsStatus.status === 'pending';
+        const logoUrl = CONFIG.brandLogos[station.brand];
+
+        // Status ring color
+        const ringColor = isLive ? '#10B981' : (isPending ? '#F59E0B' : 'transparent');
+        const borderColor = isLive ? '#10B981' : (isPending ? '#F59E0B' : 'white');
+
+        // Inner content: logo image or bold initial
+        const innerContent = logoUrl
+            ? `<img src="${logoUrl}" alt="${station.brand}" style="width:26px;height:26px;object-fit:contain;border-radius:4px;">`
+            : `<span style="font-size:13px;font-weight:800;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.4);">${station.brand.charAt(0)}</span>`;
+
+        // Pin shape: rounded square with a downward pointer, brand color background
         const iconHtml = `
-            <div style="position: relative; width: 24px; height: 24px;">
-                ${isLive ? '<div class="pulse-ring"></div>' : ''}
+            <div style="position:relative;width:36px;height:46px;">
+                ${(isLive || isPending) ? `<div class="pulse-ring" style="border-color:${ringColor};width:36px;height:36px;top:0;left:0;position:absolute;border-radius:50%;"></div>` : ''}
+                <!-- Pin body -->
                 <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: ${isLive ? '18px' : '16px'};
-                    height: ${isLive ? '18px' : '16px'};
-                    background: ${color};
-                    border: 3px solid ${isLive ? '#10B981' : 'white'};
-                    border-radius: 50%;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    position:absolute;top:0;left:0;
+                    width:36px;height:36px;
+                    background:${logoUrl ? '#fff' : color};
+                    border:2.5px solid ${borderColor};
+                    border-radius:50%;
+                    box-shadow:0 3px 10px rgba(0,0,0,0.35);
+                    display:flex;align-items:center;justify-content:center;
+                    overflow:hidden;
+                ">
+                    ${innerContent}
+                </div>
+                <!-- Pin pointer -->
+                <div style="
+                    position:absolute;
+                    bottom:0;left:50%;
+                    transform:translateX(-50%);
+                    width:0;height:0;
+                    border-left:6px solid transparent;
+                    border-right:6px solid transparent;
+                    border-top:12px solid ${borderColor};
                 "></div>
             </div>
         `;
-        
+
         // Create marker
         const marker = L.marker([station.lat, station.lng], {
             icon: L.divIcon({
-                className: 'custom-marker',
                 html: iconHtml,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
+                className: '',
+                iconSize: [36, 46],
+                iconAnchor: [18, 46]   // anchor at the tip of the pin
             })
         });
 
@@ -120,58 +147,63 @@ const MapManager = {
 
         let deviceHtml = '';
         
-        if (deviceInfo && deviceInfo.pumpType) {
+        if (deviceInfo) {
+            const isAutomated = deviceInfo.automationType === 'automated';
             deviceHtml = '<div class="popup-devices">';
-            deviceHtml += `<div class="device-section-title"><i class="fas fa-gas-pump"></i> Pump Info</div>`;
+            deviceHtml += `<div class="device-section-title"><i class="fas fa-microchip"></i> Station: ${isAutomated ? 'Automated' : 'Non-Automated'}</div>`;
             
-            deviceHtml += `<div class="device-item">
-                <span class="device-label">Type:</span>
-                <span class="device-value">${deviceInfo.pumpType}</span>
-            </div>`;
-            
-            // Show IMEI only for Wayne pumps
-            if (deviceInfo.pumpType === 'Wayne') {
-                if (deviceInfo.masterIMEI) {
+            if (!isAutomated) {
+                deviceHtml += `<div class="device-item-divider"></div>`;
+                
+                if (deviceInfo.pumpType) {
                     deviceHtml += `<div class="device-item">
-                        <span class="device-label">🖥️ Master:</span>
-                        <span class="device-value">${DeviceManager.formatIMEI(deviceInfo.masterIMEI)}</span>
+                        <span class="device-label">Type:</span>
+                        <span class="device-value">${deviceInfo.pumpType}</span>
                     </div>`;
                 }
                 
-                if (deviceInfo.slaveIMEI) {
+                // Show IMEI only for Wayne pumps
+                if (deviceInfo.pumpType === 'Wayne') {
+                    if (deviceInfo.masterIMEI) {
+                        deviceHtml += `<div class="device-item">
+                            <span class="device-label">🖥️ Master:</span>
+                            <span class="device-value">${DeviceManager.formatIMEI(deviceInfo.masterIMEI)}</span>
+                        </div>`;
+                    }
+                    if (deviceInfo.slaveIMEI) {
+                        deviceHtml += `<div class="device-item">
+                            <span class="device-label">📱 Slave:</span>
+                            <span class="device-value">${DeviceManager.formatIMEI(deviceInfo.slaveIMEI)}</span>
+                        </div>`;
+                    }
+                }
+
+                if (deviceInfo.pumpCount) {
                     deviceHtml += `<div class="device-item">
-                        <span class="device-label">📱 Slave:</span>
-                        <span class="device-value">${DeviceManager.formatIMEI(deviceInfo.slaveIMEI)}</span>
+                        <span class="device-label">Pumps:</span>
+                        <span class="device-value">${deviceInfo.pumpCount}</span>
+                    </div>`;
+                }
+
+                if (deviceInfo.fuelTypes && deviceInfo.fuelTypes.length > 0) {
+                    const fuelIcons = CONFIG.fuelTypes;
+                    const fuelTypesDisplay = deviceInfo.fuelTypes.map(type => 
+                        `${fuelIcons[type] || '•'} ${type}`
+                    ).join(', ');
+                    
+                    deviceHtml += `<div class="device-item">
+                        <span class="device-label">Fuels:</span>
+                        <span class="device-value">${fuelTypesDisplay}</span>
+                    </div>`;
+                }
+
+                if (deviceInfo.nozzleCount) {
+                    deviceHtml += `<div class="device-item">
+                        <span class="device-label">Nozzles:</span>
+                        <span class="device-value">${deviceInfo.nozzleCount}</span>
                     </div>`;
                 }
             }
-            
-            if (deviceInfo.pumpCount) {
-                deviceHtml += `<div class="device-item">
-                    <span class="device-label">Pumps:</span>
-                    <span class="device-value">${deviceInfo.pumpCount}</span>
-                </div>`;
-            }
-            
-            if (deviceInfo.fuelTypes && deviceInfo.fuelTypes.length > 0) {
-                const fuelIcons = CONFIG.fuelTypes;
-                const fuelTypesDisplay = deviceInfo.fuelTypes.map(type => 
-                    `${fuelIcons[type] || '•'} ${type}`
-                ).join(', ');
-                
-                deviceHtml += `<div class="device-item">
-                    <span class="device-label">Fuels:</span>
-                    <span class="device-value">${fuelTypesDisplay}</span>
-                </div>`;
-            }
-            
-            if (deviceInfo.nozzleCount) {
-                deviceHtml += `<div class="device-item">
-                    <span class="device-label">Nozzles:</span>
-                    <span class="device-value">${deviceInfo.nozzleCount} total</span>
-                </div>`;
-            }
-            
             deviceHtml += '</div>';
         }
 
@@ -535,6 +567,13 @@ const MapManager = {
         document.getElementById('etimsNotes').value = etimsStatus.notes || '';
         document.getElementById('stationLatLng').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         
+        // Set automation type and trigger change handler
+        const automationTypeEl = document.getElementById('automationType');
+        if (automationTypeEl) {
+            automationTypeEl.value = deviceInfo.automationType || 'manual';
+            UI.handleAutomationTypeChange();
+        }
+
         // Load device data
         document.getElementById('pumpType').value = deviceInfo.pumpType || '';
         document.getElementById('masterIMEI').value = deviceInfo.masterIMEI || '';

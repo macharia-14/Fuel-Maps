@@ -1,38 +1,31 @@
 /**
- * Device Manager
+ * Device Manager with Firebase Integration
  * Handles tracking of devices and pump configurations
  * IMEI tracking only for Wayne pumps
  */
 
 const DeviceManager = {
-    // Get device data from localStorage
+    // Get device data from localStorage (via DataManager — the sole owner
+    // of localStorage access)
     getDeviceData() {
-        try {
-            const data = localStorage.getItem(CONFIG.storage.deviceData);
-            return data ? JSON.parse(data) : {};
-        } catch (error) {
-            console.error('Error loading device data:', error);
-            return {};
-        }
+        return DataManager._readStore('device');
     },
 
-    // Save device data to localStorage
+    // Save device data to localStorage (kept for backward-compat callers;
+    // routes through DataManager instead of touching localStorage directly)
     saveDeviceData(data) {
-        try {
-            localStorage.setItem(CONFIG.storage.deviceData, JSON.stringify(data));
-            return true;
-        } catch (error) {
-            console.error('Error saving device data:', error);
-            return false;
-        }
+        return DataManager._writeStore('device', data);
     },
 
-    // Update device info for a station
+    // Update device info for a station. Writes to localStorage immediately
+    // and queues the change for background sync — never waits on the network.
     updateDeviceInfo(lat, lng, deviceInfo) {
-        const deviceData = this.getDeviceData();
-        const stationKey = `${lat}_${lng}`;
-        
-        deviceData[stationKey] = {
+        const id = DataManager.getEntityId(lat, lng);
+        const existing = DataManager.getRawRecord('device', id);
+
+        const record = DataManager._stampLocalWrite(existing, {
+            id,
+            automationType: deviceInfo.automationType || 'manual',
             pumpType: deviceInfo.pumpType || '',
             masterIMEI: deviceInfo.masterIMEI || '',
             slaveIMEI: deviceInfo.slaveIMEI || '',
@@ -40,11 +33,14 @@ const DeviceManager = {
             fuelTypes: deviceInfo.fuelTypes || [],
             nozzleCount: deviceInfo.nozzleCount || 0,
             nozzlesPerPump: deviceInfo.nozzlesPerPump || '',
-            installationDate: deviceInfo.installationDate || '',
-            updatedAt: new Date().toISOString()
-        };
-        
-        return this.saveDeviceData(deviceData);
+            installationDate: deviceInfo.installationDate || ''
+        });
+
+        DataManager._putRawRecord('device', id, record);
+        DataManager.enqueueSync('device', id, 'upsert');
+        DataManager._kickSync();
+
+        return true;
     },
 
     // Get device info for a station
@@ -177,8 +173,7 @@ const DeviceManager = {
             'Station Name', 'Brand', 'County', 
             'Pump Type', 'Master IMEI', 'Slave IMEI', 
             'Pump Count', 'Fuel Types', 'Total Nozzles', 
-            'Nozzles per Pump', 'Installation Date', 
-            'Latitude', 'Longitude'
+            'Nozzles per Pump', 'Installation Date'
         ];
         
         // Create CSV rows
@@ -201,9 +196,7 @@ const DeviceManager = {
                 `"${fuelTypes}"`,
                 deviceInfo.nozzleCount || 0,
                 `"${deviceInfo.nozzlesPerPump || 'N/A'}"`,
-                `"${deviceInfo.installationDate || 'N/A'}"`,
-                station.lat,
-                station.lng
+                `"${deviceInfo.installationDate || 'N/A'}"`
             ].join(',');
         });
         
@@ -219,19 +212,19 @@ const DeviceManager = {
         link.click();
         URL.revokeObjectURL(url);
         
-        UI.showToast('Report exported successfully!');
+        if (typeof UI !== 'undefined') {
+            UI.showToast('Full report exported successfully!');
+        }
     },
 
     // Delete device info for a station
     deleteDeviceInfo(lat, lng) {
-        const deviceData = this.getDeviceData();
-        const stationKey = `${lat}_${lng}`;
-        
-        if (deviceData[stationKey]) {
-            delete deviceData[stationKey];
-            return this.saveDeviceData(deviceData);
+        const id = DataManager.getEntityId(lat, lng);
+        if (DataManager.getRawRecord('device', id)) {
+            DataManager._deleteRawRecord('device', id);
+            DataManager.enqueueSync('device', id, 'delete');
+            DataManager._kickSync();
         }
-        
         return true;
     },
 

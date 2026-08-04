@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Kobil logo design -->
+  <defs>
+    <linearGradient id="kobilGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#560BAD;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2D1B69;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Main circular design -->
+  <circle cx="50" cy="50" r="45" fill="url(#kobilGradient)" stroke="#333" stroke-width="2"/>
+
+  <!-- Fuel drop with lightning bolt -->
+  <path d="M50 20 L 45 35 L 50 45 L 55 35 Z" fill="#FFF"/>
+  <rect x="48" y="45" width="4" height="20" fill="#FFF"/>
+
+  <!-- Lightning bolt -->
+  <path d="M35 30 L 40 30 L 38 35 L 45 35 L 35 50 L 40 40 L 33 40 Z" fill="#FFD700"/>
+</svg>

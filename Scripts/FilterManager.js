@@ -7,7 +7,8 @@ const FilterManager = {
         notStarted: true,
         brand: '',
         county: '',
-        pumpType: ''
+        pumpType: '',
+        automationType: ''
     },
 
     // Initialize filters
@@ -52,6 +53,15 @@ const FilterManager = {
             option.textContent = pumpTypes[key].label;
             pumpTypeFilter.appendChild(option);
         }
+
+        // Populate automation filter
+        const autoFilter = document.getElementById('automationFilter');
+        if (autoFilter) {
+            autoFilter.innerHTML = `
+                <option value="">All Systems</option>
+                <option value="manual">Manual Only</option>
+                <option value="automated">Automated Only</option>`;
+        }
     },
 
     // Toggle status filter
@@ -78,6 +88,9 @@ const FilterManager = {
         this.state.county = document.getElementById('countyFilter').value;
         this.state.pumpType = document.getElementById('pumpTypeFilter').value;
         
+        const autoFilter = document.getElementById('automationFilter');
+        if (autoFilter) this.state.automationType = autoFilter.value;
+        
         MapManager.refreshMarkers();
         UI.updateStats();
     },
@@ -95,7 +108,11 @@ const FilterManager = {
         // County filter
         if (this.state.county && station.county !== this.state.county) return false;
         
+        const stationAutomation = deviceInfo ? (deviceInfo.automationType || 'manual') : 'manual';
+        
         // Pump Type filter
+        if (this.state.automationType && stationAutomation !== this.state.automationType) return false;
+
         const stationPumpType = deviceInfo ? deviceInfo.pumpType : '';
         if (this.state.pumpType && stationPumpType !== this.state.pumpType) return false;
         

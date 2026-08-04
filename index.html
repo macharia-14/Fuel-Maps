@@ -2,19 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Removed maximum-scale=1.0 and user-scalable=no — blocks zoom for low-vision users -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Track KRA ETIMS integration status for petrol stations across Kenya. View live, pending, and not-started stations on an interactive map.">
     <title>KRA ETIMS Tracker - Petrol Stations Kenya</title>
-    
-    <!-- External Libraries -->
+
+    <!-- Preconnect: max 4, most impactful origins only -->
+    <!-- fonts.gstatic.com serves the actual woff2 files — highest priority -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- fonts.googleapis.com serves the CSS that references gstatic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- firebase.googleapis.com: remote config + auth calls hit this early -->
+    <link rel="preconnect" href="https://firebase.googleapis.com" crossorigin>
+    <!-- firestore.googleapis.com: data fetch, needs crossorigin for CORS -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <!-- firebaseinstallations removed — audit showed it as unused on initial load -->
+
     <link rel="icon" type="image/png" sizes="64x64" href="images/fuel2.png">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+    <!-- Leaflet CSS — render-blocking but unavoidable; map won't layout without it -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
+
+    <!-- Google Fonts — display=swap already in URL, avoids invisible text flash -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
-    
+
+    <!-- Font Awesome — async load to unblock render (icons appear after paint, acceptable) -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"></noscript>
+
+    <!-- font-display: swap override for Font Awesome — must match weight/style exactly -->
+    <!-- fa-solid-900 is weight:900, fa-brands-400 is weight:400 -->
+    <style>
+        @font-face {
+            font-family: 'Font Awesome 5 Free';
+            font-style: normal;
+            font-weight: 900;
+            font-display: swap;
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-solid-900.woff2') format('woff2');
+        }
+        @font-face {
+            font-family: 'Font Awesome 5 Brands';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-brands-400.woff2') format('woff2');
+        }
+        @font-face {
+            font-family: 'Font Awesome 5 Free';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-regular-400.woff2') format('woff2');
+        }
+    </style>
+
     <!-- Custom Styles -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -27,7 +72,7 @@
                     <div class="logo">
                         <i class="fas fa-gas-pump"></i>
                     </div>
-                    <h1>ETIMS Tracker</h1>
+                    <h1>Station Tracker</h1>
                 </div>
                 <div class="header-actions">
                     <div class="search-bar-container">
@@ -45,10 +90,14 @@
                         <div class="search-results" id="searchResults"></div>
                     </div>
                     <div class="header-actions-buttons">
+                        <button class="theme-toggle" id="themeToggle" onclick="ThemeManager.toggle()" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
+                            <i class="fas fa-sun icon-sun"></i>
+                            <i class="fas fa-moon icon-moon"></i>
+                        </button>
                         <button class="icon-btn" onclick="UI.toggleSidebar()" title="Filters & Stats">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <button class="icon-btn" onclick="DataManager.exportData()" title="Export Report">
+                        <button class="icon-btn" onclick="DataManager.exportData(true)" title="Export Filtered Data">
                             <i class="fas fa-file-export"></i>
                         </button>
                         <button class="icon-btn" onclick="MapManager.getUserLocation()" title="My Location">
@@ -75,7 +124,7 @@
         </header>
 
         <!-- Map -->
-        <div class="map-container">
+        <main class="map-container" aria-label="Station map">
             <div id="map"></div>
             
             <!-- User Location Indicator -->
@@ -86,10 +135,10 @@
                     <i class="fas fa-plus"></i> Add Station Here
                 </button>
             </div>
-        </div>
+        </main>
 
         <!-- Floating Action Button -->
-        <button class="fab" id="fab" onclick="UI.toggleAddStation()">
+        <button class="fab" id="fab" onclick="UI.toggleAddStation()" aria-label="Add new station">
             <span>+</span>
         </button>
 
@@ -156,9 +205,9 @@
 
                 <!-- Brand Filter -->
                 <div class="filter-group">
-                    <div class="filter-title">Filter by Brand</div>
+                    <div class="filter-title"><label for="brandFilter">Filter by Brand</label></div>
                     <div class="form-group">
-                        <select class="form-select" id="brandFilter" onchange="FilterManager.applyFilters()">
+                        <select class="form-select" id="brandFilter" onchange="FilterManager.applyFilters()" aria-label="Filter by brand">
                             <option value="">All Brands</option>
                         </select>
                     </div>
@@ -166,9 +215,9 @@
 
                 <!-- County Filter -->
                 <div class="filter-group">
-                    <div class="filter-title">Filter by County</div>
+                    <div class="filter-title"><label for="countyFilter">Filter by County</label></div>
                     <div class="form-group">
-                        <select class="form-select" id="countyFilter" onchange="FilterManager.applyFilters()">
+                        <select class="form-select" id="countyFilter" onchange="FilterManager.applyFilters()" aria-label="Filter by county">
                             <option value="">All Counties</option>
                         </select>
                     </div>
@@ -176,10 +225,20 @@
 
                 <!-- Pump Type Filter -->
                 <div class="filter-group">
-                    <div class="filter-title">Filter by Pump Type</div>
+                    <div class="filter-title"><label for="pumpTypeFilter">Filter by Pump Type</label></div>
                     <div class="form-group">
-                        <select class="form-select" id="pumpTypeFilter" onchange="FilterManager.applyFilters()">
+                        <select class="form-select" id="pumpTypeFilter" onchange="FilterManager.applyFilters()" aria-label="Filter by pump type">
                             <option value="">All Pump Types</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Automation Filter -->
+                <div class="filter-group">
+                    <div class="filter-title"><label for="automationFilter">Filter by System</label></div>
+                    <div class="form-group">
+                        <select class="form-select" id="automationFilter" onchange="FilterManager.applyFilters()" aria-label="Filter by automation system">
+                            <option value="">All Systems</option>
                         </select>
                     </div>
                 </div>
@@ -188,6 +247,15 @@
             <div class="sidebar-footer">
                 <button class="btn btn-primary" style="width: 100%" onclick="UI.toggleSidebar()">
                     Show Results
+                </button>
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 10px;" onclick="DataManager.exportData(true)">
+                    <i class="fas fa-download"></i> Download Filtered Data
+                </button>
+                <button class="btn btn-outline" style="width: 100%; margin-top: 8px;" onclick="DataManager.exportAllData()">
+                    <i class="fas fa-file-csv"></i> Download All Data
+                </button>
+                <button class="btn btn-outline" style="width: 100%; margin-top: 8px;" onclick="UI.triggerImport()">
+                    <i class="fas fa-file-upload"></i> Import Stations from CSV
                 </button>
             </div>
         </div>
@@ -208,36 +276,40 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Station Name *</label>
+                        <label class="form-label" for="stationName">Station Name *</label>
                         <input type="text" class="form-input" id="stationName" placeholder="e.g., Total Westlands" required>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Brand *</label>
+                        <label class="form-label" for="stationBrand">Brand *</label>
                         <select class="form-select" id="stationBrand" required>
                             <option value="">Select Brand</option>
                             <optgroup label="Major Brands">
+                                <option value="Galana">Galana</option>
                                 <option value="Total">Total</option>
                                 <option value="Shell">Shell</option>
                                 <option value="Rubis">Rubis</option>
                                 <option value="Kenol">Kenol</option>
                                 <option value="Kobil">Kobil</option>
                                 <option value="Ola">Ola</option>
-                                <option value="Galana">Galana</option>
-                                <option value="Hass">Hass</option>
-                                <option value="Engen">Engen</option>
+                                <option value="Petrocam">Petrocam</option>
+                                <option value="Hass">Hass Petroleum</option>
+                                
                                 <option value="Delta">Delta</option>
                                 <option value="National Oil">National Oil</option>
-                                <option value="Be Energy">Be Energy</option>
+                                
                             </optgroup>
                             <optgroup label="Other Brands">
                                 <option value="Astrol">Astrol</option>
                                 <option value="Dalbit">Dalbit</option>
                                 <option value="Gapco">Gapco</option>
+                                <option value="Engen">Engen</option>
+                                <option value="Be Energy">Be Energy</option>
                                 <option value="Green Wells">Green Wells</option>
                                 <option value="Gulf Energy">Gulf Energy</option>
                                 <option value="Independent">Independent</option>
                                 <option value="Lake Oil">Lake Oil</option>
+                                <option value="Lake Energy">Lake Energy</option>
                                 <option value="Lexo">Lexo</option>
                                 <option value="Mega Oil">Mega Oil</option>
                                 <option value="Mogas">Mogas</option>
@@ -256,12 +328,20 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">County *</label>
+                        <label class="form-label" for="stationCounty">County *</label>
                         <input type="text" class="form-input" id="stationCounty" placeholder="e.g., Nairobi" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="automationType">Station System Type *</label>
+                        <select class="form-select" id="automationType" onchange="UI.handleAutomationTypeChange()">
+                            <option value="manual">Non-Automated (Manual)</option>
+                            <option value="automated">Automated (System Integrated)</option>
+                        </select>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">KRA ETIMS Status *</label>
+                        <label class="form-label" for="etimsStatus">KRA ETIMS Status *</label>
                         <select class="form-select" id="etimsStatus" required>
                             <option value="">Select Status</option>
                             <option value="live">✅ Live - Integrated & Operating</option>
@@ -271,27 +351,31 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Notes (Optional)</label>
+                        <label class="form-label" for="etimsNotes">Notes (Optional)</label>
                         <textarea class="form-input" id="etimsNotes" rows="2" placeholder="e.g., Completed 15/01/2026"></textarea>
                     </div>
+
+                     
                     
-                    <!-- Pump Configuration Section -->
+                    <!-- Wrapper for conditional fields -->
+                    <div id="pumpConfigSection">
                     <div class="form-section-header">
                         <span class="section-icon"><i class="fas fa-gas-pump"></i></span>
                         <span class="section-title">Pump Configuration</span>
                     </div>
-                    
                     <div class="form-group">
-                        <label class="form-label">Pump Type/Manufacturer *</label>
-                        <select class="form-select" id="pumpType" onchange="UI.handlePumpTypeChange()" required>
+                        <label class="form-label" for="pumpType">Pump Type/Manufacturer *</label>
+                        <select class="form-select" id="pumpType" onchange="UI.handlePumpTypeChange()">
                             <option value="">Select Pump Type</option>
                             <option value="Wayne">Wayne (IMEI Required)</option>
                             <option value="Tokheim">Tokheim</option>
                             <option value="Gilbarco">Gilbarco</option>
+                            <option value="Lanfeng">Lanfeng</option>
                             <option value="Dover">Dover/OPW</option>
                             <option value="Tatsuno">Tatsuno</option>
                             <option value="Censtar">Censtar</option>
                             <option value="Sanki">Sanki</option>
+                            <option value="Changlong">Changlong</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -304,53 +388,53 @@
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">Master Device IMEI</label>
+                            <label class="form-label" for="masterIMEI">Master Device IMEI</label>
                             <input type="text" class="form-input" id="masterIMEI" placeholder="Back office device IMEI" maxlength="15">
                             <small class="form-hint">15-digit IMEI number</small>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">Slave Device IMEI</label>
+                            <label class="form-label" for="slaveIMEI">Slave Device IMEI</label>
                             <input type="text" class="form-input" id="slaveIMEI" placeholder="Pump device IMEI" maxlength="15">
                             <small class="form-hint">15-digit IMEI number</small>
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Number of Pumps</label>
+                        <label class="form-label" for="pumpCount">Number of Pumps</label>
                         <input type="number" class="form-input" id="pumpCount" placeholder="e.g., 4" min="0" max="50">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Fuel Types Available</label>
+                        <label class="form-label" for="fuelTypesContainer">Fuel Types Available</label>
                         <div class="checkbox-grid" id="fuelTypesContainer">
                             <label class="checkbox-option">
                                 <input type="checkbox" name="fuelType" value="Petrol" id="fuelPetrol">
-                                <span>⛽ Petrol</span>
+                                <span> Petrol</span>
                             </label>
                             <label class="checkbox-option">
                                 <input type="checkbox" name="fuelType" value="Diesel" id="fuelDiesel">
-                                <span>🚛 Diesel</span>
+                                <span> Diesel</span>
                             </label>
                             <label class="checkbox-option">
                                 <input type="checkbox" name="fuelType" value="Kerosene" id="fuelKerosene">
-                                <span>🔥 Kerosene</span>
+                                <span> Kerosene</span>
                             </label>
                             <label class="checkbox-option">
                                 <input type="checkbox" name="fuelType" value="LPG" id="fuelLPG">
-                                <span>💨 LPG</span>
+                                <span> LPG</span>
                             </label>
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Total Nozzles</label>
+                        <label class="form-label" for="nozzleCount">Total Nozzles</label>
                         <input type="number" class="form-input" id="nozzleCount" placeholder="Total number of nozzles" min="0" max="200">
                         <small class="form-hint">Total nozzles across all pumps</small>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Nozzles per Pump</label>
+                        <label class="form-label" for="nozzlesPerPump">Nozzles per Pump</label>
                         <select class="form-select" id="nozzlesPerPump">
                             <option value="">Select configuration</option>
                             <option value="2">2 nozzles per pump</option>
@@ -362,13 +446,14 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Installation Date</label>
+                        <label class="form-label" for="installationDate">Installation Date</label>
                         <input type="date" class="form-input" id="installationDate">
+                    </div>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Location Coordinates</label>
-                        <input type="text" class="form-input" id="stationLatLng" readonly style="background: var(--bg);">
+                        <label class="form-label" for="stationLatLng">Location Coordinates</label>
+                        <input type="text" class="form-input" id="stationLatLng" readonly style="background: var(--bg);" aria-label="Location coordinates (set by map click)">
                     </div>
                     
                     <div class="btn-group">
@@ -385,19 +470,74 @@
         <div class="toast" id="toast"></div>
     </div>
 
-    <!-- External Libraries -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    
-    <!-- Application Scripts -->
-    <script src="Scripts/config.js"></script>
-    <script src="Scripts/data.js"></script>
-    <script src="Scripts/DataManager.js"></script>
-    <script src="Scripts/DeviceManager.js"></script>
-    <script src="Scripts/MapManager.js"></script>
-    <script src="Scripts/FilterManager.js"></script>
-    <script src="Scripts/searchManager.js"></script>
-    <script src="Scripts/UI.js"></script>
-    <script src="Scripts/App.js"></script>
+    <!-- External Libraries: defer to unblock HTML parsing -->
+    <!-- Leaflet must load before app scripts that call L.* — defer preserves order -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js" defer></script>
+
+    <!-- Application Scripts — all deferred, execution order preserved -->
+    <script src="Scripts/config.js" defer></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js" defer></script>
+    <script src="Scripts/FirebaseManager.js" defer></script>
+    <script src="Scripts/SyncManager.js" defer></script>
+    <script src="Scripts/data.js" defer></script>
+    <script src="Scripts/DataManager.js" defer></script>
+    <script src="Scripts/DeviceManager.js" defer></script>
+    <script src="Scripts/MapManager.js" defer></script>
+    <script src="Scripts/FilterManager.js" defer></script>
+    <script src="Scripts/searchManager.js" defer></script>
+    <script src="Scripts/UI.js" defer></script>
+    <script src="Scripts/App.js" defer></script>
+    <script>
+        // ── ThemeManager — runs immediately (no defer) so theme applies before paint ──
+        const ThemeManager = (() => {
+            const STORAGE_KEY = 'fuel-maps-theme';
+            const root = document.documentElement;
+
+            function apply(theme) {
+                root.setAttribute('data-theme', theme);
+                localStorage.setItem(STORAGE_KEY, theme);
+                // Update map tile filter for any already-rendered tiles
+                document.querySelectorAll('.leaflet-tile-pane').forEach(pane => {
+                    pane.style.filter = theme === 'light'
+                        ? 'none'
+                        : 'invert(1) hue-rotate(185deg) saturate(0.7) brightness(0.85)';
+                });
+            }
+
+            function toggle() {
+                const current = root.getAttribute('data-theme') || 'dark';
+                apply(current === 'dark' ? 'light' : 'dark');
+            }
+
+            function init() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                apply(saved || (prefersDark ? 'dark' : 'light'));
+            }
+
+            return { toggle, init };
+        })();
+
+        ThemeManager.init();
+
+        // Re-apply tile filter as Leaflet dynamically adds tile panes after map init
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new MutationObserver(() => {
+                const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+                document.querySelectorAll('.leaflet-tile-pane').forEach(pane => {
+                    pane.style.filter = theme === 'light'
+                        ? 'none'
+                        : 'invert(1) hue-rotate(185deg) saturate(0.7) brightness(0.85)';
+                });
+            });
+            const mapEl = document.getElementById('map');
+            if (mapEl) observer.observe(mapEl, { childList: true, subtree: true });
+        });
+    </script>
 </body>
 </html>

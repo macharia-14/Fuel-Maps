@@ -44,6 +44,7 @@ const UI = {
         
         // Scroll to top of form
         document.querySelector('.sheet-content').scrollTop = 0;
+        this.handleAutomationTypeChange();
     },
 
     // Close bottom sheet
@@ -59,6 +60,7 @@ const UI = {
         
         // Hide IMEI section
         document.getElementById('imeiSection').style.display = 'none';
+        this.handleAutomationTypeChange();
         
         // Remove temp marker
         if (MapManager.tempMarker) {
@@ -102,7 +104,47 @@ const UI = {
         }
     },
 
+    // Trigger file input for CSV import
+    triggerImport() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.csv';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            this.showToast('Importing stations...');
+            try {
+                const count = await DataManager.importDataFromCSV(file);
+                this.updateStats();
+                if (typeof MapManager !== 'undefined') {
+                    MapManager.refreshMarkers();
+                }
+                this.showToast(`Successfully imported ${count} stations!`);
+            } catch (error) {
+                console.error(error);
+                this.showToast('Error importing CSV file');
+            }
+        };
+        input.click();
+    },
+
     fabClickTimeout: null,
+
+    // Handle Automation Type change - show/hide pump configuration
+    handleAutomationTypeChange() {
+        const automationTypeEl = document.getElementById('automationType');
+        const pumpConfigSection = document.getElementById('pumpConfigSection');
+        
+        if (!automationTypeEl || !pumpConfigSection) return;
+        const automationType = automationTypeEl.value;
+        
+        if (automationType === 'automated') {
+            pumpConfigSection.style.display = 'none';
+        } else {
+            pumpConfigSection.style.display = 'block';
+        }
+    },
 
     // Handle pump type change - show/hide IMEI fields for Wayne pumps
     handlePumpTypeChange() {
@@ -166,16 +208,31 @@ const UI = {
         });
         
         // Get device data
-        const pumpType = document.getElementById('pumpType').value;
+        const automationTypeEl = document.getElementById('automationType');
+        const automationType = automationTypeEl ? automationTypeEl.value : 'manual';
+        
+        if (automationType === 'manual' && !document.getElementById('pumpType').value) {
+            UI.showToast('Please select a pump type for manual stations');
+            return;
+        }
+
+        const getVal = (id) => {
+            const el = document.getElementById(id);
+            return el ? el.value : '';
+        };
+
+        const pumpType = getVal('pumpType');
+        
         const deviceInfo = {
-            pumpType: pumpType,
-            masterIMEI: pumpType === 'Wayne' ? document.getElementById('masterIMEI').value.trim() : '',
-            slaveIMEI: pumpType === 'Wayne' ? document.getElementById('slaveIMEI').value.trim() : '',
-            pumpCount: document.getElementById('pumpCount').value,
-            fuelTypes: fuelTypes,
-            nozzleCount: document.getElementById('nozzleCount').value,
-            nozzlesPerPump: document.getElementById('nozzlesPerPump').value,
-            installationDate: document.getElementById('installationDate').value
+            automationType: automationType,
+            pumpType: automationType === 'manual' ? pumpType : '',
+            masterIMEI: (automationType === 'manual' && pumpType === 'Wayne') ? getVal('masterIMEI').trim() : '',
+            slaveIMEI: (automationType === 'manual' && pumpType === 'Wayne') ? getVal('slaveIMEI').trim() : '',
+            pumpCount: automationType === 'manual' ? (parseInt(getVal('pumpCount')) || 0) : 0,
+            fuelTypes: automationType === 'manual' ? fuelTypes : [],
+            nozzleCount: automationType === 'manual' ? (parseInt(getVal('nozzleCount')) || 0) : 0,
+            nozzlesPerPump: automationType === 'manual' ? getVal('nozzlesPerPump') : '',
+            installationDate: automationType === 'manual' ? getVal('installationDate') : ''
         };
         
         // Validate IMEI if Wayne pump

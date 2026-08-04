@@ -13,11 +13,42 @@ const CONFIG = {
         attribution: '© OpenStreetMap contributors'
     },
 
-    // Real Brand Logos (optional, will override generated initial)
+    // Real Brand Logos (local paths - add more as images become available)
     brandLogos: {
-        'Shell': 'https://upload.wikimedia.org/wikipedia/en/e/e8/Shell_logo.svg',
-        'Total': 'https://upload.wikimedia.org/wikipedia/en/9/9b/TotalEnergies_logo.svg',
-        'Rubis': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Rubis_logo.svg'
+        'Shell':  'images/shell.png',
+        'Total':  'images/Totalenergies.png',
+        'Rubis':  'images/Rubis.png',
+        'Ola':    'images/ola.jpeg',
+        'Galana': 'images/galana.png',
+        'Engen':  'images/Engen.jpeg',
+        'Hass':   'images/Hass.png',
+        'Stabex': 'images/Stabex.png',
+        'Towba':  'images/towba.png',
+        'Astrol': 'images/Astrol.png',
+        'Be Energy': 'images/Beeenergy.png',
+        'Dalbit': 'images/Dalbit.jpeg',
+        'Gapco':  'images/gapco.png',
+        'Green Wells': 'images/greenwells.png',
+        'Gulf Energy': 'images/gulf.png',
+        'Lake Oil': 'images/Lakeoil.png',
+        'Lexo':   'images/Lexo.png',
+        'Oryx':   'images/Oryx.jpeg',
+        'Petrolcam': 'images/Petrolcam.png',
+        
+        'Towba':  'images/towba.png',
+        'Petro Oil':  'images/petrooil.png',
+        'Sahara':  'images/Sahara.png',
+        'Kenol':  'images/kenol.png',
+        'Kobil':  'images/kobil.png',
+        'Delta':  'images/delta.png',
+        'National Oil': 'images/Nationaloil.png',
+        'Petroleum Outlets': 'images/petroleumoutlets.png',
+        'Oilibya': 'images/oilibya.png',
+        'Tosha Petroleum': 'images/Tosha.png',
+        'Mega Oil': 'images/mega.png',
+        'Movida Energy': 'images/movida.png',
+        'Mogas': 'images/mogas.png',
+        // Add more as needed
     },
 
     // Brand Colors - All major brands in Kenya
@@ -27,14 +58,14 @@ const CONFIG = {
         'Be Energy': '#00A651',
         'Dalbit': '#FFC20E',
         'Engen': '#FF0000',
-        'Galana': '#85217A',
+        'Galana': '#E30613',  // Galana red (primary brand color)
         'Gapco': '#008000',
         'Green Wells': '#228B22',
         'Gulf Energy': '#06A4DE',
         'Hass': '#CA8A10',
         'Lake Oil': '#0029996f',
         'Lexo': '#084298',
-        'Ola': '#FF5500', // OLA Energy
+        'Ola': '#0072BC',    // OLA Energy blue
         'Oryx': '#E31837',
         'Petro': '#dda2c0',
         'Rubis': '#C5212A', // Rubis Energy (KenolKobil)
@@ -124,7 +155,7 @@ const CONFIG = {
     // ETIMS Status
     etimsStatus: {
         live: {
-            label: '✅ Live',
+            label: ' Live',
             color: '#10B981',
             description: 'Integrated & Operating'
         },
@@ -144,7 +175,8 @@ const CONFIG = {
     storage: {
         customStations: 'customStations',
         etimsData: 'etimsData',
-        deviceData: 'deviceData'
+        deviceData: 'deviceData',
+        pendingQueue: 'pendingSyncQueue'
     },
 
     // UI Configuration

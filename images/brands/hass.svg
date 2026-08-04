@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Hass logo design -->
+  <defs>
+    <linearGradient id="hassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F72585;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C026D3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Heart shape -->
+  <path d="M50 75 Q 50 75, 25 50 Q 25 25, 50 25 Q 75 25, 75 50 Q 75 75, 50 75 Z"
+        fill="url(#hassGradient)" stroke="#333" stroke-width="2"/>
+
+  <!-- Fuel pump in heart -->
+  <rect x="42" y="35" width="16" height="20" fill="#FFF" rx="2"/>
+  <circle cx="50" cy="42" r="4" fill="#333"/>
+  <rect x="48" y="45" width="4" height="8" fill="#333"/>
+</svg>

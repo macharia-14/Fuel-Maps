@@ -2,28 +2,49 @@
 // Guard to prevent re-initialization if scripts are loaded twice
 if (window.etimsTrackerInitialized) {
     console.warn('⚠️ ETIMS Tracker already initialized. Skipping re-initialization. Please check for duplicate script tags in your HTML.');
-} else {
+} else { // Only proceed if not already initialized
     window.etimsTrackerInitialized = true;
 
     // Initialize application when DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
         console.log('🚀 ETIMS Tracker starting...');
-        
-        // Initialize all managers
+
+        // Offline-first startup order: local data renders first, Firebase
+        // connects after. The app must never depend on Firebase to paint
+        // its first frame.
+        const localStationCount = DataManager.getCustomStations().length;
+        console.log(`Loaded ${localStationCount} station(s) from local storage.`);
+
+        // Initialize all managers (reads from localStorage via DataManager)
         MapManager.init();
         FilterManager.init();
         SearchManager.init();
         UI.updateStats();
+
+        // Connectivity + queued-change sync. Bound regardless of whether
+        // Firebase is configured, so offline/online logging still works.
+        if (typeof SyncManager !== 'undefined') {
+            SyncManager.init();
+        }
+
+        // Connect to Firebase last. This only synchronizes — it never gets
+        // to decide what's already on screen.
+        if (typeof FirebaseManager !== 'undefined') {
+            FirebaseManager.init();
+        }
         
         // Set up form submission
         document.getElementById('stationForm').addEventListener('submit', (e) => {
             UI.handleFormSubmit(e);
         });
         
+        // Set up automation type change listener
+        const automationType = document.getElementById('automationType');
+        if (automationType) {
+            automationType.addEventListener('change', () => UI.handleAutomationTypeChange());
+        }
+
         // Log initialization complete
-        console.log('✅ ETIMS Tracker initialized successfully');
-        console.log(`📊 Loaded ${DataManager.getAllStations().length} stations`);
-        console.log(`📍 Custom stations: ${DataManager.getCustomStations().length}`);
     });
 
     // Handle page visibility change (refresh data when page becomes visible)
@@ -58,6 +79,4 @@ if (window.etimsTrackerInitialized) {
             //     .catch(err => console.log('Service Worker registration failed:', err));
         });
     }
-
-    console.log('📱 ETIMS Tracker loaded - Ready for use!');
 }

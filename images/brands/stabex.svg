@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Stabex logo design -->
+  <defs>
+    <linearGradient id="stabexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF006E;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#BE185D;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Star shape -->
+  <path d="M50 15 L 55 35 L 75 35 L 60 50 L 65 70 L 50 55 L 35 70 L 40 50 L 25 35 L 45 35 Z"
+        fill="url(#stabexGradient)" stroke="#333" stroke-width="2"/>
+
+  <!-- Center fuel symbol -->
+  <circle cx="50" cy="45" r="8" fill="#FFF"/>
+  <rect x="48" y="45" width="4" height="10" fill="#FFF"/>
+</svg>
