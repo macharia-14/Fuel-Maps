@@ -51,6 +51,32 @@ const CONFIG = {
         // Add more as needed
     },
 
+    // Known naming variants that should resolve to a canonical brand above.
+    // Exact matches in brandLogos/brandColors always win first — this is
+    // only a fallback for near-misses (different CSV sources, rebrands,
+    // case differences) so a naming mismatch degrades gracefully instead
+    // of silently losing the logo.
+    brandAliases: {
+        'totalenergies': 'Total',
+        'total energies': 'Total',
+        'ola energy': 'Ola',
+        'olaenergy': 'Ola',
+        'vivo energy': 'Shell',
+        'vivo': 'Shell',
+        'lake energy': 'Lake Oil',
+        'hass petroleum': 'Hass',
+    },
+
+    // Resolve a station's raw brand string to whatever key actually has a
+    // logo/color entry. Never mutates the station's own brand field —
+    // this is purely for rendering lookups.
+    resolveBrand(brand) {
+        if (!brand) return brand;
+        if (this.brandLogos[brand] || this.brandColors[brand]) return brand;
+        const alias = this.brandAliases[brand.trim().toLowerCase()];
+        return alias || brand;
+    },
+
     // Brand Colors - All major brands in Kenya
     brandColors: {
         // From user list

@@ -67,10 +67,11 @@ const MapManager = {
             return;
         }
         
-        const color = CONFIG.brandColors[station.brand] || CONFIG.brandColors['Independent'];
+        const resolvedBrand = CONFIG.resolveBrand(station.brand);
+        const color = CONFIG.brandColors[resolvedBrand] || CONFIG.brandColors['Independent'];
         const isLive = etimsStatus.status === 'live';
         const isPending = etimsStatus.status === 'pending';
-        const logoUrl = CONFIG.brandLogos[station.brand];
+        const logoUrl = CONFIG.brandLogos[resolvedBrand];
 
         // Status ring color
         const ringColor = isLive ? '#10B981' : (isPending ? '#F59E0B' : 'transparent');
@@ -211,7 +212,7 @@ const MapManager = {
             `<button class="popup-btn popup-btn-secondary" onclick="MapManager.deleteStation(${station.lat}, ${station.lng})"><i class="fas fa-trash"></i> Delete</button>` : '';
 
         // Generate logo: either a real image or a colored initial
-        const logoUrl = CONFIG.brandLogos[station.brand];
+        const logoUrl = CONFIG.brandLogos[CONFIG.resolveBrand(station.brand)];
         let logoHtml;
 
         if (logoUrl) {

@@ -45,16 +45,13 @@ const FirebaseManager = {
                 console.warn("Analytics initialization failed");
             }
 
-            // Firestore's own offline cache. This is independent of, and
-            // harmless alongside, our localStorage layer — the app never
-            // reads from this cache directly, it only ever reads through
-            // DataManager, so the two can't disagree about what's on screen.
-            this.db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
-                }
-            });
-
+            // Deliberately NOT calling enablePersistence(). DataManager +
+            // localStorage is already our offline-first source of truth —
+            // Firestore's own IndexedDB persistence layer duplicates that
+            // and, per Lighthouse, its bootstrap is the dominant cost in a
+            // ~41s main-thread block on this SDK (two ~10s tasks). Nothing
+            // in this app reads from Firestore's local cache directly, so
+            // there was no upside to it, just the cost.
             this.setupListeners();
 
             // We may already have a queue of local changes from while this
