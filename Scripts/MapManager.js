@@ -5,6 +5,15 @@
  */
 
 const MapManager = {
+    // Called via onerror on a brand logo <img> when the file 404s (missing
+    // asset, bad path, etc). Swaps it for the same colored-initial fallback
+    // used when there's no logoUrl at all, instead of a broken-image icon.
+    handleLogoError(imgEl, initial, color, fontSize) {
+        if (!imgEl || !imgEl.parentElement) return;
+        imgEl.parentElement.style.background = color;
+        imgEl.outerHTML = `<span style="font-size:${fontSize};font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.4);">${initial}</span>`;
+    },
+
     map: null,
     markers: [],
     routingControl: null,
@@ -77,10 +86,13 @@ const MapManager = {
         const ringColor = isLive ? '#10B981' : (isPending ? '#F59E0B' : 'transparent');
         const borderColor = isLive ? '#10B981' : (isPending ? '#F59E0B' : 'white');
 
-        // Inner content: logo image or bold initial
+        // Inner content: logo image or bold initial. If the logo URL 404s
+        // at runtime (missing file), onerror swaps it for the initial
+        // fallback instead of leaving a broken-image icon on the map.
+        const initial = station.brand.charAt(0);
         const innerContent = logoUrl
-            ? `<img src="${logoUrl}" alt="${station.brand}" style="width:26px;height:26px;object-fit:contain;border-radius:4px;">`
-            : `<span style="font-size:13px;font-weight:800;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.4);">${station.brand.charAt(0)}</span>`;
+            ? `<img src="${logoUrl}" alt="${station.brand}" style="width:26px;height:26px;object-fit:contain;border-radius:4px;" onerror="MapManager.handleLogoError(this, '${initial}', '${color}', '13px')">`
+            : `<span style="font-size:13px;font-weight:800;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.4);">${initial}</span>`;
 
         // Pin shape: rounded square with a downward pointer, brand color background
         const iconHtml = `
@@ -212,7 +224,8 @@ const MapManager = {
             `<button class="popup-btn popup-btn-secondary" onclick="MapManager.deleteStation(${station.lat}, ${station.lng})"><i class="fas fa-trash"></i> Delete</button>` : '';
 
         // Generate logo: either a real image or a colored initial
-        const logoUrl = CONFIG.brandLogos[CONFIG.resolveBrand(station.brand)];
+        const resolvedBrandForPopup = CONFIG.resolveBrand(station.brand);
+        const logoUrl = CONFIG.brandLogos[resolvedBrandForPopup];
         let logoHtml;
 
         if (logoUrl) {
@@ -229,7 +242,7 @@ const MapManager = {
                     overflow: hidden;
                     border: 1px solid #eee;
                 ">
-                    <img src="${logoUrl}" alt="${station.brand} Logo" style="width: 90%; height: 90%; object-fit: contain;">
+                    <img src="${logoUrl}" alt="${station.brand} Logo" style="width: 90%; height: 90%; object-fit: contain;" onerror="MapManager.handleLogoError(this, '${station.brand.charAt(0)}', '${color}', '18px')">
                 </div>
             `;
         } else {

@@ -19,8 +19,7 @@ const FirebaseManager = {
         projectId: "tims-tracker",
         storageBucket: "tims-tracker.firebasestorage.app",
         messagingSenderId: "26046509272",
-        appId: "1:26046509272:web:4c4111649c81b1486f67ad",
-        measurementId: "G-0RYBD4K3BX"
+        appId: "1:26046509272:web:4c4111649c81b1486f67ad"
     },
 
     // type -> Firestore collection name
@@ -38,12 +37,6 @@ const FirebaseManager = {
             firebase.initializeApp(this.config);
             this.db = firebase.firestore();
             this.isInitialized = true;
-
-            try {
-                if (this.config.measurementId) firebase.analytics();
-            } catch (e) {
-                console.warn("Analytics initialization failed");
-            }
 
             // Deliberately NOT calling enablePersistence(). DataManager +
             // localStorage is already our offline-first source of truth —

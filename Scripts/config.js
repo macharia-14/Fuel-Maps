@@ -33,11 +33,11 @@ const CONFIG = {
         'Lake Oil': 'images/Lakeoil.png',
         'Lexo':   'images/Lexo.png',
         'Oryx':   'images/Oryx.jpeg',
-        'Petrolcam': 'images/Petrolcam.png',
+        'Petrolcam': 'images/petrolcam.png',
         
         'Towba':  'images/towba.png',
         'Petro Oil':  'images/petrooil.png',
-        'Sahara':  'images/Sahara.png',
+        'Sahara':  'images/Sahara.jpeg',
         'Kenol':  'images/kenol.png',
         'Kobil':  'images/kobil.png',
         'Delta':  'images/delta.png',
